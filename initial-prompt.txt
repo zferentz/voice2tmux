@@ -1,0 +1,21 @@
+# // This was the initial Claude Code prompt I used to create the backend and frontend  // #
+
+We're going to create a system that sends voice commands to a program running in tmux.
+
+The system will have a backend and a frontend.
+
+The Backend - listener.py
+--------------------------
+The backend is a simple Python web server written in FastAPI that exposes a `/listen` endpoint and waits for the client to send POST requests with text:
+```
+POST /listen
+{ "text": "..."}
+```
+
+Once the backend gets text from the /listen endpoint, it calls the "tmux send-keys" command:
+```tmux send-keys -t claude-session '$TEXT_FROM_LISTEN' Enter```
+
+The FrontEnd - listener.html 
+-----------------------------
+* shows a simple chatbot window
+* The user can enter text to be sent to the backend, or hit a microphone button and use voice commands to be sent to the backend
