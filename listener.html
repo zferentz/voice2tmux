@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice To Text</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .description {
+            margin: 10px 0;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .terminal-command {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin: 15px auto;
+            max-width: 500px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            color: #f8f8f8;
+            text-align: left;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .terminal-command code {
+            color: #00ff88;
+            font-weight: bold;
+        }
+        
+        .chat-window {
+            height: 300px;
+            overflow-y: auto;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 18px;
+            max-width: 80%;
+        }
+        
+        .message.user {
+            background: #007AFF;
+            color: white;
+            margin-left: auto;
+        }
+        
+        .message.system {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .message.error {
+            background: #ff4444;
+            color: white;
+        }
+        
+        .input-area {
+            padding: 20px;
+            display: flex;
+            flex-direction: row;
+            gap: 15px;
+            align-items: flex-start;
+        }
+        
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            flex-shrink: 0;
+            min-width: 100px;
+        }
+        
+        .text-input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 15px;
+            outline: none;
+            font-size: 16px;
+            resize: vertical;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.5;
+            min-height: 120px;
+            width: 100%;
+        }
+        
+        /* RTL support for Hebrew and Arabic */
+        .text-input[dir="rtl"] {
+            direction: rtl;
+            text-align: right;
+        }
+        
+        .message[dir="rtl"] {
+            direction: rtl;
+            text-align: right;
+        }
+        
+        .text-input:focus {
+            border-color: #007AFF;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-send {
+            background: #007AFF;
+            color: white;
+        }
+        
+        .btn-send:hover {
+            background: #0056b3;
+        }
+        
+        .btn-mic {
+            background: #ff6b6b;
+            color: white;
+            min-width: 70px;
+            min-height: 70px;
+            font-size: 24px;
+            border-radius: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-mic:hover {
+            background: #ff5252;
+        }
+        
+        .btn-mic.listening {
+            background: #4CAF50;
+            animation: pulse 1.5s infinite;
+            transform: scale(1.1);
+        }
+        
+        .btn-mic.pressed {
+            background: #ff3333;
+            transform: scale(0.95);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .status {
+            padding: 10px 20px;
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+            border-top: 1px solid #eee;
+        }
+        
+        .language-select {
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            color: #333;
+            font-size: 12px;
+            outline: none;
+            cursor: pointer;
+            min-width: 120px;
+        }
+        
+        .language-select:focus {
+            border-color: #007AFF;
+            box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+        }
+        
+        .language-select option {
+            background: white;
+            color: black;
+        }
+        
+        .language-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+        }
+        
+        .session-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+            justify-content: center;
+        }
+        
+        .session-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+        
+        .session-input {
+            padding: 6px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            font-size: 14px;
+            outline: none;
+            min-width: 200px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        }
+        
+        .session-input:focus {
+            border-color: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.25);
+        }
+        
+        .session-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        
+        .btn-clear {
+            padding: 8px 16px;
+            border: 2px solid #ff6b6b;
+            border-radius: 20px;
+            background: rgba(255, 107, 107, 0.1);
+            color: #ff6b6b;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-clear:hover {
+            background: rgba(255, 107, 107, 0.2);
+            border-color: #ff5252;
+            color: #ff5252;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="language-controls">
+            <select id="languageSelect" class="language-select" onchange="updateLanguage()">
+                <!-- Default browser language will be inserted here -->
+                <!-- English -->
+                <option value="en-US" selected>English (United States)</option>
+                <option value="en-GB">English (United Kingdom)</option>
+                <option value="en-AU">English (Australia)</option>
+                <option value="en-CA">English (Canada)</option>
+                <option value="en-IN">English (India)</option>
+                <option value="en-NZ">English (New Zealand)</option>
+                <option value="en-ZA">English (South Africa)</option>
+                
+                <!-- Spanish -->
+                <option value="es-ES">Spanish (Spain)</option>
+                <option value="es-MX">Spanish (Mexico)</option>
+                <option value="es-US">Spanish (United States)</option>
+                <option value="es-AR">Spanish (Argentina)</option>
+                <option value="es-CL">Spanish (Chile)</option>
+                <option value="es-CO">Spanish (Colombia)</option>
+                
+                <!-- French -->
+                <option value="fr-FR">French (France)</option>
+                <option value="fr-CA">French (Canada)</option>
+                
+                <!-- German -->
+                <option value="de-DE">German (Germany)</option>
+                
+                <!-- Italian -->
+                <option value="it-IT">Italian (Italy)</option>
+                
+                <!-- Portuguese -->
+                <option value="pt-BR">Portuguese (Brazil)</option>
+                <option value="pt-PT">Portuguese (Portugal)</option>
+                
+                <!-- Russian -->
+                <option value="ru-RU">Russian (Russia)</option>
+                
+                <!-- Japanese -->
+                <option value="ja-JP">Japanese (Japan)</option>
+                
+                <!-- Korean -->
+                <option value="ko-KR">Korean (South Korea)</option>
+                
+                <!-- Chinese -->
+                <option value="zh-CN">Chinese (Simplified)</option>
+                <option value="zh-TW">Chinese (Traditional)</option>
+                <option value="zh-HK">Chinese (Hong Kong)</option>
+                
+                <!-- Arabic -->
+                <option value="ar-SA">Arabic (Saudi Arabia)</option>
+                <option value="ar-EG">Arabic (Egypt)</option>
+                
+                <!-- Hindi -->
+                <option value="hi-IN">Hindi (India)</option>
+                
+                <!-- Dutch -->
+                <option value="nl-NL">Dutch (Netherlands)</option>
+                
+                <!-- Polish -->
+                <option value="pl-PL">Polish (Poland)</option>
+                
+                <!-- Turkish -->
+                <option value="tr-TR">Turkish (Turkey)</option>
+                
+                <!-- Swedish -->
+                <option value="sv-SE">Swedish (Sweden)</option>
+                
+                <!-- Norwegian -->
+                <option value="nb-NO">Norwegian (Norway)</option>
+                
+                <!-- Danish -->
+                <option value="da-DK">Danish (Denmark)</option>
+                
+                <!-- Finnish -->
+                <option value="fi-FI">Finnish (Finland)</option>
+                
+                <!-- Czech -->
+                <option value="cs-CZ">Czech (Czech Republic)</option>
+                
+                <!-- Hungarian -->
+                <option value="hu-HU">Hungarian (Hungary)</option>
+                
+                <!-- Hebrew -->
+                <option value="he-IL">Hebrew (Israel)</option>
+                
+                <!-- Thai -->
+                <option value="th-TH">Thai (Thailand)</option>
+                
+                <!-- Vietnamese -->
+                <option value="vi-VN">Vietnamese (Vietnam)</option>
+                </select>
+        </div>
+        
+        <div class="header">
+            <h1>Voice Command Listener</h1>
+            <p class="description">Send voice commands to your program running in a tmux session</p>
+            <div class="session-controls">
+                <label class="session-label" for="sessionName">Session Name:</label>
+                <input type="text" id="sessionName" class="session-input" 
+                       value="my-session" placeholder="my-session"
+                       oninput="updateSessionCommand()" onchange="updateSessionCommand()">
+            </div>
+            <div class="terminal-command" id="terminalCommand">
+                <code># tmux new -A -s my-session claude</code>
+            </div>
+        </div>
+        
+        <div class="chat-window" id="chatWindow">
+            <div class="message system">
+                Welcome! Type a command or use the microphone to send voice commands to your tmux session.
+            </div>
+        </div>
+        
+        <div class="input-area">
+            <textarea id="textInput" class="text-input" placeholder="Enter command..." 
+                      rows="6" onkeypress="handleKeyPress(event)"></textarea>
+            <div class="button-container">
+                <button class="btn btn-mic" id="micBtn" 
+                        onmousedown="startRecording(event)" onmouseup="stopRecording(event)" onmouseleave="stopRecording(event)"
+                        ontouchstart="startRecording(event)" ontouchend="stopRecording(event)">🎤</button>
+                <button class="btn btn-send" onclick="sendTextCommand()">Send</button>
+                <button class="btn-clear" onclick="clearChat()" title="Clear chat history">🗑️ Clear</button>
+            </div>
+        </div>
+        
+        <div class="status" id="status">
+            Ready to receive commands
+        </div>
+    </div>
+
+    <script>
+        let recognition = null;
+        let isListening = false;
+        let currentLanguage = 'en-US';
+        let lastInterimTranscript = '';
+
+        // Initialize speech recognition if available
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = function() {
+                isListening = true;
+                document.getElementById('micBtn').classList.add('listening');
+                updateStatus('Listening... Speak now');
+            };
+
+            recognition.onresult = function(event) {
+                let finalTranscript = '';
+                let interimTranscript = '';
+                
+                console.log('Speech recognition result event:', event);
+                console.log('Number of results:', event.results.length);
+                
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const result = event.results[i];
+                    const transcript = result[0].transcript;
+                    const confidence = result[0].confidence;
+                    
+                    console.log(`Result ${i}: "${transcript}" (confidence: ${confidence}, final: ${result.isFinal})`);
+                    
+                    if (result.isFinal) {
+                        finalTranscript += transcript;
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+                
+                // Add final transcript to buffer
+                if (finalTranscript) {
+                    console.log('Adding to buffer:', finalTranscript);
+                    finalTranscriptBuffer += finalTranscript;
+                }
+                
+                // Store interim transcript for fallback
+                lastInterimTranscript = interimTranscript;
+                
+                // Display real-time voice input in the input box
+                const textInput = document.getElementById('textInput');
+                const currentTranscript = finalTranscriptBuffer + interimTranscript;
+                
+                if (currentTranscript) {
+                    if (isOverwriteMode) {
+                        // Overwrite mode: replace entire content
+                        textInput.value = currentTranscript;
+                    } else {
+                        // Insert mode: insert at cursor position with spaces
+                        const beforeCursor = originalTextBeforeRecording.substring(0, recordingStartPosition);
+                        const afterCursor = originalTextBeforeRecording.substring(recordingStartPosition);
+                        
+                        // Add spaces before and after the voice input
+                        const spacedTranscript = ` ${currentTranscript} `;
+                        textInput.value = beforeCursor + spacedTranscript + afterCursor;
+                        
+                        // Set cursor position after the inserted text (including spaces)
+                        const newCursorPos = recordingStartPosition + spacedTranscript.length;
+                        textInput.setSelectionRange(newCursorPos, newCursorPos);
+                    }
+                    
+                    // Set RTL direction for Hebrew and Arabic during real-time input
+                    if (isRTLLanguage(currentLanguage)) {
+                        textInput.setAttribute('dir', 'rtl');
+                    } else {
+                        textInput.removeAttribute('dir');
+                    }
+                    updateStatus(`Recording: ${currentTranscript}`);
+                } else {
+                    updateStatus('Hold to speak...');
+                }
+            };
+
+            recognition.onerror = function(event) {
+                console.error('Speech recognition error:', event.error, event);
+                addMessage(`Speech recognition error: ${event.error}`, 'error');
+                updateStatus('Ready to receive commands');
+                resetMicButton();
+            };
+
+            recognition.onend = function() {
+                console.log('Speech recognition ended. Buffer:', finalTranscriptBuffer);
+                console.log('Buffer length:', finalTranscriptBuffer.length);
+                console.log('Was listening:', isListening);
+                
+                // If we have interim results but no final results, use what we have
+                if (finalTranscriptBuffer.trim() === '' && lastInterimTranscript.trim() !== '') {
+                    console.log('Using interim results as final:', lastInterimTranscript);
+                    finalTranscriptBuffer = lastInterimTranscript;
+                }
+                
+                resetMicButton();
+                
+                // Process any accumulated text when recognition ends
+                if (finalTranscriptBuffer.trim()) {
+                    processTranscript();
+                } else {
+                    updateStatus('No speech detected - try again');
+                }
+            };
+        } else {
+            document.getElementById('micBtn').style.display = 'none';
+            updateStatus('Speech recognition not supported in this browser');
+        }
+
+        function addMessage(text, type) {
+            const chatWindow = document.getElementById('chatWindow');
+            const message = document.createElement('div');
+            message.className = `message ${type}`;
+            message.textContent = text;
+            chatWindow.appendChild(message);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        function updateStatus(text) {
+            document.getElementById('status').textContent = text;
+        }
+
+        function resetMicButton() {
+            isListening = false;
+            const micBtn = document.getElementById('micBtn');
+            micBtn.classList.remove('listening');
+            micBtn.classList.remove('pressed');
+        }
+
+        async function sendCommand(text) {
+            if (!text.trim()) return;
+
+            updateStatus('Sending command...');
+            
+            try {
+                // Get the session name from the input field
+                const sessionName = document.getElementById('sessionName').value.trim() || 'my-session';
+                
+                // Use the current server's origin instead of hardcoded localhost:8099
+                const serverUrl = `${window.location.origin}/listen`;
+                const response = await fetch(serverUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        text: text.trim(),
+                        session_name: sessionName
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    addMessage(`✓ ${result.message}`, 'system');
+                    updateStatus('Command sent successfully');
+                } else {
+                    const error = await response.json();
+                    addMessage(`✗ Error: ${error.detail}`, 'error');
+                    updateStatus('Error sending command');
+                }
+            } catch (error) {
+                addMessage(`✗ Network error: ${error.message}`, 'error');
+                updateStatus('Network error - is the server running?');
+            }
+        }
+
+        async function sendTextCommand() {
+            const input = document.getElementById('textInput');
+            const text = input.value;
+            
+            if (text.trim()) {
+                addMessage(text, 'user');
+                
+                // For manually typed text, translate if needed
+                // (Voice input is already translated and pasted)
+                const isVoiceInput = text === finalTranscriptBuffer; // Check if this came from voice
+                
+                if (!isVoiceInput && getLanguageCode(currentLanguage) !== 'en') {
+                    // Only translate manually typed non-English text
+                    updateStatus('Translating...');
+                    const translatedText = await translateToEnglish(text, currentLanguage);
+                    
+                    if (translatedText !== text) {
+                        addMessage(`🔄 Translated: ${translatedText}`, 'system');
+                    }
+                    
+                    sendCommand(translatedText);
+                } else {
+                    // Send as-is (either English or already translated voice input)
+                    sendCommand(text);
+                }
+                
+                input.value = '';
+            }
+        }
+
+        let finalTranscriptBuffer = '';
+        
+        let recordingStartPosition = 0;
+        let originalTextBeforeRecording = '';
+        let isOverwriteMode = false;
+        let stopRecordingTimeout = null;
+        
+        function startRecording(event) {
+            event.preventDefault();
+            if (!recognition) {
+                addMessage('Speech recognition not available', 'error');
+                return;
+            }
+
+            if (!isListening) {
+                // Clear any pending stop timeout if user starts recording again
+                if (stopRecordingTimeout) {
+                    clearTimeout(stopRecordingTimeout);
+                    stopRecordingTimeout = null;
+                }
+                
+                finalTranscriptBuffer = '';
+                lastInterimTranscript = '';
+                
+                const textInput = document.getElementById('textInput');
+                recordingStartPosition = textInput.selectionStart;
+                originalTextBeforeRecording = textInput.value;
+                
+                // Determine if we should overwrite (cursor at position 0) or insert
+                isOverwriteMode = (recordingStartPosition === 0);
+                
+                if (isOverwriteMode) {
+                    // Clear the input box when cursor is at beginning
+                    textInput.value = '';
+                    recordingStartPosition = 0;
+                    originalTextBeforeRecording = '';
+                }
+                
+                console.log('Starting recording for language:', currentLanguage, 'at position:', recordingStartPosition, 'overwrite mode:', isOverwriteMode);
+                document.getElementById('micBtn').classList.add('pressed');
+                recognition.start();
+                updateStatus('Hold to speak...');
+            }
+        }
+
+        async function processTranscript() {
+            if (finalTranscriptBuffer.trim()) {
+                const originalText = finalTranscriptBuffer;
+                console.log('Processing text:', originalText);
+                
+                const textInput = document.getElementById('textInput');
+                
+                // Translate if needed
+                updateStatus('Translating...');
+                console.log('About to translate:', originalText, 'from', currentLanguage);
+                const translatedText = await translateToEnglish(originalText, currentLanguage);
+                console.log('Translation result:', translatedText);
+                
+                // Show original voice input first, then translation if needed
+                if (getLanguageCode(currentLanguage) !== 'en') {
+                    // Show original text with RTL support if needed
+                    const originalMsg = document.createElement('div');
+                    originalMsg.className = 'message system';
+                    originalMsg.textContent = `🎤 Voice input: ${originalText}`;
+                    if (isRTLLanguage(currentLanguage)) {
+                        originalMsg.setAttribute('dir', 'rtl');
+                    }
+                    document.getElementById('chatWindow').appendChild(originalMsg);
+                    document.getElementById('chatWindow').scrollTop = document.getElementById('chatWindow').scrollHeight;
+                }
+                
+                // Only show translation message if text was actually translated
+                if (translatedText !== originalText) {
+                    addMessage(`🔄 Translated: ${translatedText}`, 'system');
+                }
+                
+                // Update the input box with the final translated text
+                if (isOverwriteMode) {
+                    // Overwrite mode: replace entire content
+                    textInput.value = translatedText;
+                } else {
+                    // Insert mode: insert at cursor position with spaces
+                    const beforeCursor = originalTextBeforeRecording.substring(0, recordingStartPosition);
+                    const afterCursor = originalTextBeforeRecording.substring(recordingStartPosition);
+                    
+                    // Add spaces before and after the voice input
+                    const spacedTranslatedText = ` ${translatedText} `;
+                    textInput.value = beforeCursor + spacedTranslatedText + afterCursor;
+                    
+                    // Set cursor position after the inserted text (including spaces)
+                    const newCursorPos = recordingStartPosition + spacedTranslatedText.length;
+                    textInput.setSelectionRange(newCursorPos, newCursorPos);
+                }
+                
+                // Set RTL direction for the final text
+                if (isRTLLanguage(currentLanguage)) {
+                    textInput.setAttribute('dir', 'rtl');
+                } else {
+                    textInput.removeAttribute('dir');
+                }
+                
+                textInput.focus();
+                
+                finalTranscriptBuffer = '';
+            } else {
+                console.log('No text in buffer to process');
+                updateStatus('No speech detected - try again');
+            }
+        }
+
+        async function stopRecording(event) {
+            event.preventDefault();
+            if (recognition && isListening) {
+                document.getElementById('micBtn').classList.remove('pressed');
+                
+                console.log('User released button, continuing recording for 250ms...');
+                updateStatus('Recording... (capturing final words)');
+                
+                // Clear any existing timeout
+                if (stopRecordingTimeout) {
+                    clearTimeout(stopRecordingTimeout);
+                }
+                
+                // Continue recording for 250ms to capture the last word
+                stopRecordingTimeout = setTimeout(() => {
+                    if (recognition && isListening) {
+                        recognition.stop();
+                        console.log('Stopping recording after delay. Buffer content:', finalTranscriptBuffer);
+                        console.log('Last interim:', lastInterimTranscript);
+                        
+                        // Note: Processing will happen in onend event
+                    }
+                    stopRecordingTimeout = null;
+                }, 250);
+            }
+        }
+        
+        function isRTLLanguage(lang) {
+            const rtlLanguages = ['he-IL', 'ar-SA', 'ar-EG'];
+            return rtlLanguages.includes(lang);
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendTextCommand();
+            }
+        }
+
+        function updateLanguage() {
+            if (recognition) {
+                currentLanguage = document.getElementById('languageSelect').value;
+                recognition.lang = currentLanguage;
+                
+                // Save language preference to localStorage
+                localStorage.setItem('voiceCommandLanguage', currentLanguage);
+                
+                // Move selected language to top of dropdown
+                moveLanguageToTop(currentLanguage);
+                
+                updateStatus(`Language changed to ${document.getElementById('languageSelect').options[document.getElementById('languageSelect').selectedIndex].text}`);
+            }
+        }
+        
+        function moveLanguageToTop(selectedLang) {
+            const languageSelect = document.getElementById('languageSelect');
+            const selectedOption = languageSelect.querySelector(`option[value="${selectedLang}"]`);
+            
+            if (selectedOption) {
+                // Remove the selected option from its current position
+                selectedOption.remove();
+                
+                // Insert it at the top (index 0)
+                languageSelect.insertBefore(selectedOption, languageSelect.firstChild);
+                
+                // Update the value to maintain selection
+                languageSelect.value = selectedLang;
+                
+                // Save the new language order
+                saveLanguageOrder();
+            }
+        }
+        
+        function saveLanguageOrder() {
+            const languageSelect = document.getElementById('languageSelect');
+            const languageOrder = [];
+            
+            for (let i = 0; i < languageSelect.options.length; i++) {
+                languageOrder.push({
+                    value: languageSelect.options[i].value,
+                    text: languageSelect.options[i].text
+                });
+            }
+            
+            localStorage.setItem('voiceCommandLanguageOrder', JSON.stringify(languageOrder));
+        }
+        
+        function loadLanguageOrder() {
+            const savedOrder = localStorage.getItem('voiceCommandLanguageOrder');
+            
+            if (savedOrder) {
+                try {
+                    const languageOrder = JSON.parse(savedOrder);
+                    const languageSelect = document.getElementById('languageSelect');
+                    
+                    // Clear current options
+                    languageSelect.innerHTML = '';
+                    
+                    // Rebuild dropdown with saved order
+                    languageOrder.forEach(lang => {
+                        const option = document.createElement('option');
+                        option.value = lang.value;
+                        option.textContent = lang.text;
+                        languageSelect.appendChild(option);
+                    });
+                    
+                    console.log('Language order restored from localStorage');
+                } catch (error) {
+                    console.error('Error loading language order:', error);
+                    // If there's an error, add default and save current order
+                    addDefaultLanguageToTop();
+                    saveLanguageOrder();
+                }
+            } else {
+                // First time - add default language and save the initial order
+                addDefaultLanguageToTop();
+                saveLanguageOrder();
+            }
+        }
+        
+        function addDefaultLanguageToTop() {
+            const defaultLang = getBrowserDefaultLanguage();
+            const languageSelect = document.getElementById('languageSelect');
+            
+            // Find the default language option
+            const defaultOption = languageSelect.querySelector(`option[value="${defaultLang}"]`);
+            
+            if (defaultOption) {
+                // Create a new option with "(default)" label
+                const newDefaultOption = document.createElement('option');
+                newDefaultOption.value = defaultLang;
+                newDefaultOption.textContent = defaultOption.textContent + ' (default)';
+                
+                // Remove the original option
+                defaultOption.remove();
+                
+                // Insert the new option at the top
+                languageSelect.insertBefore(newDefaultOption, languageSelect.firstChild);
+            }
+        }
+        
+        function getBrowserDefaultLanguage() {
+            // Get browser language preference
+            const browserLang = navigator.language || navigator.userLanguage;
+            const languageSelect = document.getElementById('languageSelect');
+            
+            // First try exact match (e.g., 'en-US')
+            for (let i = 0; i < languageSelect.options.length; i++) {
+                if (languageSelect.options[i].value === browserLang) {
+                    return browserLang;
+                }
+            }
+            
+            // Then try language code match (e.g., 'en' from 'en-US')
+            const langCode = browserLang.split('-')[0];
+            for (let i = 0; i < languageSelect.options.length; i++) {
+                if (languageSelect.options[i].value.startsWith(langCode + '-')) {
+                    return languageSelect.options[i].value;
+                }
+            }
+            
+            // Fallback to English US
+            return 'en-US';
+        }
+        
+        // resetToDefaultLanguage function removed - default is now always at top of dropdown
+        
+        function loadSavedLanguage() {
+            // First load the language order
+            loadLanguageOrder();
+            
+            // Then load saved language preference, or use browser default
+            const savedLanguage = localStorage.getItem('voiceCommandLanguage');
+            const defaultLanguage = getBrowserDefaultLanguage();
+            const targetLanguage = savedLanguage || defaultLanguage;
+            
+            const languageSelect = document.getElementById('languageSelect');
+            // Check if the target language exists in the dropdown
+            for (let i = 0; i < languageSelect.options.length; i++) {
+                if (languageSelect.options[i].value === targetLanguage) {
+                    languageSelect.value = targetLanguage;
+                    currentLanguage = targetLanguage;
+                    if (recognition) {
+                        recognition.lang = currentLanguage;
+                    }
+                    
+                    // If we used browser default, save it
+                    if (!savedLanguage) {
+                        localStorage.setItem('voiceCommandLanguage', currentLanguage);
+                    }
+                    break;
+                }
+            }
+        }
+
+        function getLanguageCode(langTag) {
+            // Extract the language part from language tags like 'en-US' -> 'en'
+            return langTag.split('-')[0];
+        }
+
+        async function translateToEnglish(text, sourceLang) {
+            const sourceCode = getLanguageCode(sourceLang);
+            
+            // If already English, no translation needed
+            if (sourceCode === 'en') {
+                return text;
+            }
+
+            try {
+                // Use Google Translate API via a public endpoint
+                const response = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceCode}&tl=en&dt=t&q=${encodeURIComponent(text)}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    let translatedText = '';
+                    
+                    // Parse the response format from Google Translate
+                    if (data && data[0]) {
+                        for (let i = 0; i < data[0].length; i++) {
+                            if (data[0][i] && data[0][i][0]) {
+                                translatedText += data[0][i][0];
+                            }
+                        }
+                    }
+                    
+                    return translatedText || text;
+                } else {
+                    console.error('Translation failed:', response.status);
+                    return text; // Return original text if translation fails
+                }
+            } catch (error) {
+                console.error('Translation error:', error);
+                addMessage(`Translation error: ${error.message}`, 'error');
+                return text; // Return original text if translation fails
+            }
+        }
+
+        function updateSessionCommand() {
+            const sessionName = document.getElementById('sessionName').value.trim() || 'my-session';
+            const terminalCommand = document.getElementById('terminalCommand');
+            
+            if (terminalCommand) {
+                terminalCommand.innerHTML = `<code># tmux new -A -s ${sessionName} claude</code>`;
+            }
+            
+            // Save session name to localStorage
+            if (sessionName) {
+                localStorage.setItem('voiceCommandSessionName', sessionName);
+            }
+        }
+
+        function clearChat() {
+            console.log('Clear button clicked');
+            const chatWindow = document.getElementById('chatWindow');
+            const textInput = document.getElementById('textInput');
+            console.log('Chat window element:', chatWindow);
+            console.log('Text input element:', textInput);
+            
+            if (chatWindow) {
+                chatWindow.innerHTML = '<div class="message system">Welcome! Type a command or use the microphone to send voice commands to your tmux session.</div>';
+                console.log('Chat cleared, new content:', chatWindow.innerHTML);
+            } else {
+                console.error('Chat window element not found');
+            }
+            
+            if (textInput) {
+                textInput.value = '';
+                textInput.removeAttribute('dir'); // Remove RTL direction if set
+                console.log('Input box cleared');
+            } else {
+                console.error('Text input element not found');
+            }
+            
+            updateStatus('Chat and input cleared - ready to receive commands');
+        }
+        
+        function loadSavedSessionName() {
+            const savedSessionName = localStorage.getItem('voiceCommandSessionName');
+            const sessionInput = document.getElementById('sessionName');
+            
+            if (savedSessionName && sessionInput) {
+                sessionInput.value = savedSessionName;
+                // Update the terminal command with the restored session name
+                updateSessionCommand();
+            }
+        }
+
+        // Focus on input when page loads
+        window.addEventListener('load', function() {
+            loadSavedLanguage();
+            loadSavedSessionName();
+            document.getElementById('textInput').focus();
+        });
+    </script>
+</body>
+</html>
