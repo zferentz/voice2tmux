@@ -23,10 +23,11 @@ Later, I extended it:
 - Users can specify the tmux session-name (which allowed me to use it with multiple Claude Code and Bash sessions)
 
 And yes, because I’m lazy, I used Claude Code to help write the very system that lets me talk to Claude Code. Which is… amusingly recursive.
+<img width="942" height="922" alt="image" src="https://github.com/user-attachments/assets/4282549f-f878-438c-898d-34cf0aa903aa" />
 
-<img width="1386" height="980" alt="image" src="https://github.com/user-attachments/assets/80bd2d8a-5726-4c80-b35d-eeeb09af01b4" />
 
-Some implementation topics:
+
+Some implementation notes:
 * The default port is `_PORT = 8099`  (can easily make it command line parameter if  needed...)
 * Backend using simple FastAPI endpoint `/listen`
 * This approach is not safe outside your localhost/local-network as we accept input from the web and run `subprocess.run` in the backend. 
