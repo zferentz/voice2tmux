@@ -18,8 +18,18 @@ For the uninitiated, tmux (Terminal Multiplexer) is a Linux command-line tool fo
 2.  Open a webpage that captures voice input, sends it to a simple backend, and the backend forwards it to the program via `tmux send-keys` command.
 
 I began with a simple prompt (`initial-prompt.txt`) and built a basic system that accepts text or voice input in the browser, sends it over HTTP to a server, and uses tmux send-keys to feed it into Claude Code.
-Later, I extended it: users can speak in their native language, the system uses Google Translate to convert it to English, and then sends the translated text to Claude Code.
+Later, I extended it: 
+- Users can speak in their native language, the system uses Google Translate to convert it to English, and then sends the translated text to Claude Code.
+- Users can specify the tmux session-name (which allowed me to use it with multiple Claude Code and Bash sessions)
 
-And yes - because I’m lazy - I used Claude Code to help write the very system that lets me talk to Claude Code. Which is… amusingly recursive.
+And yes, because I’m lazy, I used Claude Code to help write the very system that lets me talk to Claude Code. Which is… amusingly recursive.
 
 <img width="1386" height="980" alt="image" src="https://github.com/user-attachments/assets/80bd2d8a-5726-4c80-b35d-eeeb09af01b4" />
+
+Some implementation topics:
+* The default port is `_PORT = 8099`  (can easily make it command line parameter if  needed...)
+* Backend using simple FastAPI endpoint `/listen`
+* This approach is not safe outside your localhost/local-network as we accept input from the web and run `subprocess.run` in the backend. 
+* Frontend is pretty minimal (and was fully created by Claude so not sure about its quality ;) )
+* To record/listen, we're using the `webkitSpeechRecognition`, which is supported by the Chrome browser. Not sure about other browsers.
+* To translate, we're using the free Google Translate API.
