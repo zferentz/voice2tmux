@@ -21,3 +21,5 @@ I began with a simple prompt (`initial-prompt.txt`) and built a basic system tha
 Later, I extended it: users can speak in their native language, the system uses Google Translate to convert it to English, and then sends the translated text to Claude Code.
 
 And yes - because I’m lazy - I used Claude Code to help write the very system that lets me talk to Claude Code. Which is… amusingly recursive.
+
+<img width="1386" height="980" alt="image" src="https://github.com/user-attachments/assets/80bd2d8a-5726-4c80-b35d-eeeb09af01b4" />
